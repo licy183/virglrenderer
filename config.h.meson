@@ -55,3 +55,5 @@
 #mesondefine PIPE_ARCH_S390
 #mesondefine PIPE_ARCH_ARM
 #mesondefine PIPE_ARCH_AARCH64
+#mesondefine EGL_WITHOUT_GBM
+#mesondefine HAVE_LIBDRM
