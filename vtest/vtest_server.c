@@ -372,21 +372,52 @@ static void vtest_server_open_read_file(void)
 
 static void vtest_server_open_socket(void)
 {
+   struct sockaddr_in in;
    struct sockaddr_un un;
+   struct sockaddr *addrp;
+   socklen_t addrlen;
 
-   server.socket = socket(PF_UNIX, SOCK_STREAM, 0);
+   if (getenv("VTEST_USE_SOCKET_INET")) {
+      server.socket = socket(PF_INET, SOCK_STREAM, 0);
+
+      memset(&in, 0, sizeof(in));
+      int port = 50000;
+      char *env_override;
+      if ((env_override = getenv("VTEST_INET_PORT")) != NULL) {
+         port = atoi(env_override);
+         if (port <= 0 || port >= 65536) {
+            fprintf(stderr, "Invalid port.\n");
+            goto err;
+         }
+      }
+      in.sin_family = AF_INET;
+      in.sin_addr.s_addr = htonl(INADDR_ANY);
+      in.sin_port = htons(port);
+
+      addrp = (struct sockaddr *)&in;
+      addrlen = sizeof(struct sockaddr);
+   } else {
+      server.socket = socket(PF_UNIX, SOCK_STREAM, 0);
+
+      memset(&un, 0, sizeof(un));
+      un.sun_family = AF_UNIX;
+
+      if (getenv("VTEST_USE_SOCKET_ABSTRACT")) {
+         snprintf(&un.sun_path[1], sizeof(un.sun_path) - 1, "%s", server.socket_name);
+         addrlen = sizeof(un.sun_family) + strlen(&un.sun_path[1]) + 1;
+      } else {
+         snprintf(un.sun_path, sizeof(un.sun_path), "%s", "/data/data/com.termux/files/usr" VTEST_DEFAULT_SOCKET_NAME);
+         addrlen = sizeof(un);
+      }
+
+      addrp = (struct sockaddr *)&un;
+   }
+
    if (server.socket < 0) {
       goto err;
    }
 
-   memset(&un, 0, sizeof(un));
-   un.sun_family = AF_UNIX;
-
-   snprintf(un.sun_path, sizeof(un.sun_path), "%s", server.socket_name);
-
-   unlink(un.sun_path);
-
-   if (bind(server.socket, (struct sockaddr *)&un, sizeof(un)) < 0) {
+   if (bind(server.socket, addrp, addrlen) < 0) {
       goto err;
    }
 
