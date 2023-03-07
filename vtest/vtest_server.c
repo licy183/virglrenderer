@@ -254,6 +254,13 @@ static void vtest_server_parse_args(int argc, char **argv)
       server.multi_clients = false;
    }
 
+#ifdef __ANDROID__
+   // On Android, ensure that EGL and GLES is used.
+   server.use_egl_surfaceless = true;
+   server.use_glx = false;
+   server.use_gles = true;
+#endif
+
    server.ctx_flags = VIRGL_RENDERER_USE_EGL;
    if (server.use_glx) {
       if (server.use_egl_surfaceless || server.use_gles) {
