@@ -55,6 +55,7 @@ vrend_sources = [
    'vrend_tweaks.h',
    'vrend_winsys.c',
    'vrend_winsys.h',
+   'gl4es-decompress.c',
 ]
 
 virglrenderer_sources = [
